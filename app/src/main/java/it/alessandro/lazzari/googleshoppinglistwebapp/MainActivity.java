@@ -8,10 +8,12 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import im.delight.android.webview.AdvancedWebView;
 
-public class MainActivity extends AppCompatActivity implements AdvancedWebView.Listener {
+public class MainActivity extends AppCompatActivity implements AdvancedWebView.Listener, ListenerPageFinished.IListenerPageFinished {
 
     @BindView(R.id.webview)
     AdvancedWebView mWebView;
+
+    private ListenerPageFinished mListenerPageFinished;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,8 +21,13 @@ public class MainActivity extends AppCompatActivity implements AdvancedWebView.L
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        mListenerPageFinished = new ListenerPageFinished(this);
+
         mWebView.setListener(this, this);
-        mWebView.loadUrl("https://shoppinglist.google.com/");
+        mWebView.addJavascriptInterface(mListenerPageFinished, "HTMLOUT");
+        mWebView.setGeolocationEnabled(Boolean.TRUE);
+
+        mWebView.loadUrl("https://shoppinglist.google.com/", Boolean.TRUE);
     }
 
     @Override
@@ -30,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements AdvancedWebView.L
 
     @Override
     public void onPageFinished(String url) {
-
+        mWebView.loadUrl("javascript:window.HTMLOUT.processHTML('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
     }
 
     @Override
@@ -45,6 +52,11 @@ public class MainActivity extends AppCompatActivity implements AdvancedWebView.L
 
     @Override
     public void onExternalPageRequest(String url) {
+
+    }
+
+    @Override
+    public void onLoadPageFinished(String html) {
 
     }
 }
