@@ -29,8 +29,6 @@ android {
 
         prod {
             dimension "version"
-            applicationIdSuffix ".full"
-            versionNameSuffix "-full"
 
             versionCode gitVersionCode
             versionName gitVersionName
