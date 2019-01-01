@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply from: "$project.rootDir/tools/script-git-version.gradle"
 
 android {
     compileSdkVersion 28
@@ -6,14 +7,33 @@ android {
         applicationId "it.alessandro.lazzari.googleshoppinglistwebapp"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 1
-        versionName "0.0.1"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        versionCode gitVersionCodeTime
+        versionName gitVersionName
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    flavorDimensions "version"
+    productFlavors {
+        dev {
+            dimension "version"
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+
+            versionCode gitVersionCodeTime
+            versionName gitVersionName
+        }
+
+        prod {
+            dimension "version"
+            applicationIdSuffix ".full"
+            versionNameSuffix "-full"
+
+            versionCode gitVersionCode
+            versionName gitVersionName
         }
     }
 }
@@ -31,4 +51,5 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 
     implementation 'com.github.delight-im:Android-AdvancedWebView:v3.0.0'
+    implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
 }
