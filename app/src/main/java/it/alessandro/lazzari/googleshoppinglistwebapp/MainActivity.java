@@ -1,17 +1,32 @@
 package it.alessandro.lazzari.googleshoppinglistwebapp;
 
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import im.delight.android.webview.AdvancedWebView;
 
-public class MainActivity extends AppCompatActivity implements AdvancedWebView.Listener {
+import static it.alessandro.lazzari.googleshoppinglistwebapp.Constants.SHOPPING_LIST_PREFS;
+import static it.alessandro.lazzari.googleshoppinglistwebapp.Constants.SHOPPING_LIST_PREFS_WELCOME_MESSAGE;
+
+public class MainActivity extends AppCompatActivity
+        implements AdvancedWebView.Listener, ListenerPageFinished.IListenerPageFinished, SwipeRefreshLayout.OnRefreshListener {
 
     @BindView(R.id.webview)
     AdvancedWebView mWebView;
+    @BindView(R.id.swiperefreshlayout)
+    SwipeRefreshLayout mSwiperefreshlayout;
+
+    private ListenerPageFinished mListenerPageFinished;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,23 +34,58 @@ public class MainActivity extends AppCompatActivity implements AdvancedWebView.L
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        mSwiperefreshlayout.setOnRefreshListener(this);
+        mSwiperefreshlayout.setColorSchemeResources(android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
+        mListenerPageFinished = new ListenerPageFinished(this);
+
         mWebView.setListener(this, this);
-        mWebView.loadUrl("https://shoppinglist.google.com/");
+        mWebView.addJavascriptInterface(mListenerPageFinished, "HTMLOUT");
+        mWebView.setGeolocationEnabled(Boolean.TRUE);
+
+        final SharedPreferences prefs = getSharedPreferences(SHOPPING_LIST_PREFS, MODE_PRIVATE);
+        if (!prefs.getBoolean(SHOPPING_LIST_PREFS_WELCOME_MESSAGE, Boolean.FALSE)) {
+            new MaterialDialog.Builder(this)
+                    .title(R.string.information)
+                    .content(R.string.message_welcome)
+                    .positiveText(android.R.string.ok)
+                    .onPositive(new MaterialDialog.SingleButtonCallback() {
+                        @Override
+                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                            loadPageShoppingList();
+                            prefs.edit().putBoolean(SHOPPING_LIST_PREFS_WELCOME_MESSAGE, Boolean.TRUE).commit();
+                            dialog.dismiss();
+                        }
+                    })
+                    .autoDismiss(Boolean.FALSE)
+                    .show();
+        } else
+            loadPageShoppingList();
+
+    }
+
+    public void loadPageShoppingList() {
+        mWebView.loadUrl("https://shoppinglist.google.com/", Boolean.TRUE);
     }
 
     @Override
     public void onPageStarted(String url, Bitmap favicon) {
-
+        mWebView.setVisibility(View.GONE);
+        mSwiperefreshlayout.setRefreshing(Boolean.TRUE);
     }
 
     @Override
     public void onPageFinished(String url) {
-
+        mSwiperefreshlayout.setRefreshing(Boolean.FALSE);
+        mWebView.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onPageError(int errorCode, String description, String failingUrl) {
-
+        mSwiperefreshlayout.setRefreshing(Boolean.FALSE);
     }
 
     @Override
@@ -46,5 +96,15 @@ public class MainActivity extends AppCompatActivity implements AdvancedWebView.L
     @Override
     public void onExternalPageRequest(String url) {
 
+    }
+
+    @Override
+    public void onLoadPageFinished(String html) {
+
+    }
+
+    @Override
+    public void onRefresh() {
+        mWebView.reload();
     }
 }
