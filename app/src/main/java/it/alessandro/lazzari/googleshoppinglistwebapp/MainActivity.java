@@ -7,8 +7,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -60,15 +58,6 @@ public class MainActivity extends AppCompatActivity
         mWebView.addJavascriptInterface(mListenerPageFinished, "HTMLOUT");
         mWebView.setGeolocationEnabled(Boolean.TRUE);
 
-        RotateAnimation rotate = new RotateAnimation(
-                0, 360,
-                Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF, 0.5f
-        );
-        rotate.setDuration(ROTATE_ANIMATION_DURATION);
-        rotate.setRepeatCount(Animation.INFINITE);
-        mImageViewRefresh.startAnimation(rotate);
-
         final SharedPreferences prefs = getSharedPreferences(SHOPPING_LIST_PREFS, MODE_PRIVATE);
         if (!prefs.getBoolean(SHOPPING_LIST_PREFS_WELCOME_MESSAGE, Boolean.FALSE)) {
             new MaterialDialog.Builder(this)
@@ -109,7 +98,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onPageStarted(String url, Bitmap favicon) {
         mLinearLayoutRefresh.setVisibility(View.VISIBLE);
+        mLinearLayoutOffline.setVisibility(View.GONE);
+
         mWebView.setVisibility(View.GONE);
+
         mSwipeRefreshLayout.setRefreshing(Boolean.TRUE);
     }
 
