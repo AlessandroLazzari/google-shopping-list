@@ -7,6 +7,10 @@ import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -21,12 +25,22 @@ import static it.alessandro.lazzari.googleshoppinglistwebapp.Constants.SHOPPING_
 public class MainActivity extends AppCompatActivity
         implements AdvancedWebView.Listener, ListenerPageFinished.IListenerPageFinished, SwipeRefreshLayout.OnRefreshListener {
 
+    private static final String LOGCAT = MainActivity.class.getSimpleName();
+    private static final int ROTATE_ANIMATION_DURATION = 3200;
+
     @BindView(R.id.webview)
     AdvancedWebView mWebView;
-    @BindView(R.id.swiperefreshlayout)
-    SwipeRefreshLayout mSwiperefreshlayout;
+    @BindView(R.id.swipeRefreshLayout)
+    SwipeRefreshLayout mSwipeRefreshLayout;
+    @BindView(R.id.imageViewRefresh)
+    ImageView mImageViewRefresh;
+    @BindView(R.id.linearLayoutOffline)
+    LinearLayout mLinearLayoutOffline;
+    @BindView(R.id.linearLayoutRefresh)
+    LinearLayout mLinearLayoutRefresh;
 
     private ListenerPageFinished mListenerPageFinished;
+    private Boolean mIsOnline = Boolean.TRUE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +48,8 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        mSwiperefreshlayout.setOnRefreshListener(this);
-        mSwiperefreshlayout.setColorSchemeResources(android.R.color.holo_blue_bright,
+        mSwipeRefreshLayout.setOnRefreshListener(this);
+        mSwipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_bright,
                 android.R.color.holo_green_light,
                 android.R.color.holo_orange_light,
                 android.R.color.holo_red_light);
@@ -45,6 +59,15 @@ public class MainActivity extends AppCompatActivity
         mWebView.setListener(this, this);
         mWebView.addJavascriptInterface(mListenerPageFinished, "HTMLOUT");
         mWebView.setGeolocationEnabled(Boolean.TRUE);
+
+        RotateAnimation rotate = new RotateAnimation(
+                0, 360,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f
+        );
+        rotate.setDuration(ROTATE_ANIMATION_DURATION);
+        rotate.setRepeatCount(Animation.INFINITE);
+        mImageViewRefresh.startAnimation(rotate);
 
         final SharedPreferences prefs = getSharedPreferences(SHOPPING_LIST_PREFS, MODE_PRIVATE);
         if (!prefs.getBoolean(SHOPPING_LIST_PREFS_WELCOME_MESSAGE, Boolean.FALSE)) {
@@ -67,25 +90,47 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        InternetCheck.Consumer consumer = new InternetCheck.Consumer() {
+            @Override
+            public void accept(Boolean internet) {
+                mIsOnline = internet;
+            }
+        };
+        new InternetCheck(consumer);
+    }
+
     public void loadPageShoppingList() {
         mWebView.loadUrl("https://shoppinglist.google.com/", Boolean.TRUE);
     }
 
     @Override
     public void onPageStarted(String url, Bitmap favicon) {
+        mLinearLayoutRefresh.setVisibility(View.VISIBLE);
         mWebView.setVisibility(View.GONE);
-        mSwiperefreshlayout.setRefreshing(Boolean.TRUE);
+        mSwipeRefreshLayout.setRefreshing(Boolean.TRUE);
     }
 
     @Override
     public void onPageFinished(String url) {
-        mSwiperefreshlayout.setRefreshing(Boolean.FALSE);
-        mWebView.setVisibility(View.VISIBLE);
+        mLinearLayoutRefresh.setVisibility(View.GONE);
+        mLinearLayoutOffline.setVisibility(!mIsOnline ? View.VISIBLE : View.GONE);
+
+        mWebView.setVisibility(mIsOnline ? View.VISIBLE : View.GONE);
+
+        mSwipeRefreshLayout.setRefreshing(Boolean.FALSE);
     }
 
     @Override
     public void onPageError(int errorCode, String description, String failingUrl) {
-        mSwiperefreshlayout.setRefreshing(Boolean.FALSE);
+        mLinearLayoutOffline.setVisibility(View.VISIBLE);
+
+        mLinearLayoutRefresh.setVisibility(View.GONE);
+        mWebView.setVisibility(View.GONE);
+
+        mSwipeRefreshLayout.setRefreshing(Boolean.FALSE);
     }
 
     @Override
