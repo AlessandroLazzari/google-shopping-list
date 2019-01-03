@@ -24,7 +24,6 @@ public class MainActivity extends AppCompatActivity
         implements AdvancedWebView.Listener, ListenerPageFinished.IListenerPageFinished, SwipeRefreshLayout.OnRefreshListener {
 
     private static final String LOGCAT = MainActivity.class.getSimpleName();
-    private static final int ROTATE_ANIMATION_DURATION = 3200;
 
     @BindView(R.id.webview)
     AdvancedWebView mWebView;

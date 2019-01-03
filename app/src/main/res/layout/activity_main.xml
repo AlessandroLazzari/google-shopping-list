@@ -72,7 +72,8 @@
                         android:layout_marginTop="32dp"
                         style="@style/TextAppearance.MaterialComponents.Subtitle1"
                         android:text="@string/loading_app"
-                        android:gravity="center"/>
+                        android:gravity="center"
+                        android:visibility="gone"/>
             </LinearLayout>
         </LinearLayout>
     </android.support.v4.widget.SwipeRefreshLayout>
